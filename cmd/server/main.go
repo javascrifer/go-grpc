@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"time"
 
+	"github.com/javascrifer/go-grpc/internal/pkg/calculatorpb"
 	"github.com/javascrifer/go-grpc/internal/pkg/greetpb"
 	"google.golang.org/grpc"
 )
@@ -24,6 +26,35 @@ func (s *server) Greet(ctx context.Context, req *greetpb.GreetRequest) (*greetpb
 	return res, nil
 }
 
+func (s *server) GreetManyTimes(req *greetpb.GreetManyTimesRequest, stream greetpb.GreetService_GreetManyTimesServer) error {
+	fmt.Printf("GreetManyTimes function was invoked with %v\n", req)
+
+	firstName := req.GetGreeting().GetFirstName()
+	lastName := req.GetGreeting().GetLastName()
+
+	for i := 0; i < 10; i++ {
+		res := &greetpb.GreetManyTimesResponse{
+			Result: fmt.Sprintf("Hello %s %s %v!", firstName, lastName, i),
+		}
+		stream.Send(res)
+		time.Sleep(time.Second)
+	}
+
+	return nil
+}
+
+func (s *server) Add(ctx context.Context, req *calculatorpb.CalculatorRequest) (*calculatorpb.CalculatorResposne, error) {
+	fmt.Printf("Add function was invoked with %v\n", req)
+
+	x := req.GetX()
+	y := req.GetY()
+	res := &calculatorpb.CalculatorResposne{
+		Sum: x + y,
+	}
+
+	return res, nil
+}
+
 func main() {
 	fmt.Println("Initializing server")
 
@@ -33,8 +64,9 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	greetpb.RegisterGreetServiceServer(s, &server{})
-
+	srv := &server{}
+	greetpb.RegisterGreetServiceServer(s, srv)
+	calculatorpb.RegisterCalculatorServiceServer(s, srv)
 	if err := s.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
