@@ -10,6 +10,7 @@ import (
 
 	"github.com/javascrifer/go-grpc/internal/pkg/greetpb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 )
 
 func main() {
@@ -33,13 +34,18 @@ func callGreet(c greetpb.GreetServiceClient) {
 	req := &greetpb.GreetRequest{
 		Greeting: &greetpb.Greeting{
 			FirstName: "Nikolajus",
-			LastName:  "Lebedenko",
+			LastName:  "Lebedenko", // change to "" in order request to fail
 		},
 	}
 
 	res, err := c.Greet(context.Background(), req)
 	if err != nil {
-		log.Fatalf("error while calling Greet RPC: %v\n", err)
+		s, ok := status.FromError(err)
+		if ok {
+			log.Fatalf("[%v] error while calling Greet RPC: %v\n", s.Code(), s.Message())
+		} else {
+			log.Fatalf("big error while calling Greet RPC: %v\n", err)
+		}
 		return
 	}
 	log.Printf("response from Greet RPC: %v\n", res.Result)

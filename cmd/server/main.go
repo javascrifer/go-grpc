@@ -11,6 +11,8 @@ import (
 
 	"github.com/javascrifer/go-grpc/internal/pkg/greetpb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type server struct{}
@@ -24,6 +26,15 @@ func (s *server) Greet(
 
 	firstName := req.GetGreeting().GetFirstName()
 	lastName := req.GetGreeting().GetLastName()
+
+	if firstName == "" || lastName == "" {
+		err := status.Errorf(
+			codes.InvalidArgument,
+			"received empty first name or the last name",
+		)
+		return nil, err
+	}
+
 	res := &greetpb.GreetResponse{
 		Result: fmt.Sprintf("Hello %s %s!", firstName, lastName),
 	}
