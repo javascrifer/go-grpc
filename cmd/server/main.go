@@ -15,6 +15,7 @@ import (
 
 type server struct{}
 
+// Greet is implementing Unary gRPC API call
 func (s *server) Greet(
 	ctx context.Context,
 	req *greetpb.GreetRequest,
@@ -30,6 +31,7 @@ func (s *server) Greet(
 	return res, nil
 }
 
+// GreetManyTimes is implementing Server streaming gRPC API call
 func (s *server) GreetManyTimes(
 	req *greetpb.GreetManyTimesRequest,
 	stream greetpb.GreetService_GreetManyTimesServer,
@@ -50,8 +52,9 @@ func (s *server) GreetManyTimes(
 	return nil
 }
 
+// LongGreet is implementing Client streaming gRPC API call
 func (s *server) LongGreet(stream greetpb.GreetService_LongGreetServer) error {
-	fmt.Println("LongGreet function was invoked with")
+	fmt.Println("LongGreet function was invoked")
 	fullNames := []string{}
 
 	for {
@@ -63,12 +66,42 @@ func (s *server) LongGreet(stream greetpb.GreetService_LongGreetServer) error {
 			return stream.SendAndClose(res)
 		}
 		if err != nil {
-			log.Fatalf("error while reading stream in LongGreet RPC: %v", err)
+			log.Fatalf("error while reading stream in LongGreet RPC: %v\n", err)
+			return err
 		}
 
+		fmt.Printf("LongGreet received request %v\n", req)
 		firstName := req.GetGreeting().GetFirstName()
 		lastName := req.GetGreeting().GetLastName()
 		fullNames = append(fullNames, fmt.Sprintf("%s %s", firstName, lastName))
+	}
+}
+
+// GreetEveryone is implementing BiDi streaming gRPC API call
+func (s *server) GreetEveryone(stream greetpb.GreetService_GreetEveryoneServer) error {
+	fmt.Println("GreetEveryone function was invoked")
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("error while reading stream in GreetEveryone RPC: %v\n", err)
+			return err
+		}
+
+		fmt.Printf("GreetEveryone received request %v\n", req)
+		firstName := req.GetGreeting().GetFirstName()
+		lastName := req.GetGreeting().GetLastName()
+		res := &greetpb.GreetEveryoneResponse{
+			Result: fmt.Sprintf("Hello %s %s!", firstName, lastName),
+		}
+
+		if err := stream.Send(res); err != nil {
+			log.Fatalf("error while writing to stream in GreetEveryone RPC: %v\n", err)
+			return err
+		}
 	}
 }
 
