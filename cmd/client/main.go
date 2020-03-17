@@ -31,14 +31,16 @@ func main() {
 
 // Unary
 func callGreet(c greetpb.GreetServiceClient) {
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	req := &greetpb.GreetRequest{
 		Greeting: &greetpb.Greeting{
 			FirstName: "Nikolajus",
 			LastName:  "Lebedenko", // change to "" in order request to fail
 		},
 	}
+	defer cancel()
 
-	res, err := c.Greet(context.Background(), req)
+	res, err := c.Greet(ctx, req)
 	if err != nil {
 		s, ok := status.FromError(err)
 		if ok {

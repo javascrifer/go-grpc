@@ -35,6 +35,14 @@ func (s *server) Greet(
 		return nil, err
 	}
 
+	// Uncomment in order to fake some computing and deadline handling
+	// time.Sleep(50 * time.Millisecond)
+	// if ctx.Err() == context.DeadlineExceeded {
+	// log.Println("client cancelled Greet RPC call")
+	// err := status.Errorf(codes.Canceled, "client cancelled the request")
+	// return nil, err
+	// }
+
 	res := &greetpb.GreetResponse{
 		Result: fmt.Sprintf("Hello %s %s!", firstName, lastName),
 	}
