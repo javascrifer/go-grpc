@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
-	"github.com/javascrifer/go-grpc/internal/pkg/calculatorpb"
 	"github.com/javascrifer/go-grpc/internal/pkg/greetpb"
 	"google.golang.org/grpc"
 )
@@ -20,13 +20,13 @@ func main() {
 	}
 	defer cc.Close()
 
-	callGreet(cc)
-	callGreetManyTime(cc)
-	callAdd(cc)
+	c := greetpb.NewGreetServiceClient(cc)
+	callGreet(c)
+	callGreetManyTime(c)
+	callLongGreet(c)
 }
 
-func callGreet(cc *grpc.ClientConn) {
-	c := greetpb.NewGreetServiceClient(cc)
+func callGreet(c greetpb.GreetServiceClient) {
 	req := &greetpb.GreetRequest{
 		Greeting: &greetpb.Greeting{
 			FirstName: "Nikolajus",
@@ -41,8 +41,7 @@ func callGreet(cc *grpc.ClientConn) {
 	log.Printf("response from Greet RPC: %v", res.Result)
 }
 
-func callGreetManyTime(cc *grpc.ClientConn) {
-	c := greetpb.NewGreetServiceClient(cc)
+func callGreetManyTime(c greetpb.GreetServiceClient) {
 	req := &greetpb.GreetManyTimesRequest{
 		Greeting: &greetpb.Greeting{
 			FirstName: "Nikolajus",
@@ -66,15 +65,26 @@ func callGreetManyTime(cc *grpc.ClientConn) {
 	}
 }
 
-func callAdd(cc *grpc.ClientConn) {
-	c := calculatorpb.NewCalculatorServiceClient(cc)
-	req := &calculatorpb.CalculatorRequest{
-		X: 1,
-		Y: 2,
-	}
-	res, err := c.Add(context.Background(), req)
+func callLongGreet(c greetpb.GreetServiceClient) {
+	stream, err := c.LongGreet(context.Background())
 	if err != nil {
-		log.Fatalf("error while calling Add RPC: %v", err)
+		log.Fatalf("error while calling LongGreet RPC: %v", err)
 	}
-	log.Printf("response from Add RPC: %v", res.Sum)
+
+	for i := 0; i < 10; i++ {
+		req := &greetpb.LongGreetRequest{
+			Greeting: &greetpb.Greeting{
+				FirstName: "Nikolajus",
+				LastName:  "Lebedenko",
+			},
+		}
+		stream.Send(req)
+		time.Sleep(time.Second)
+	}
+
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("error while reading response of LongGreet RPC: %v", err)
+	}
+	log.Printf("response from LongGreet RPC: %v", res.GetResult())
 }
