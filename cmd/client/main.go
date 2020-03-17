@@ -22,9 +22,9 @@ func main() {
 	defer cc.Close()
 
 	c := greetpb.NewGreetServiceClient(cc)
-	// callGreet(c)
-	// callGreetManyTime(c)
-	// callLongGreet(c)
+	callGreet(c)
+	callGreetManyTime(c)
+	callLongGreet(c)
 	callGreetEveryone(c)
 }
 
