@@ -9,3 +9,9 @@ run-client:
 .PHONY:
 run-server:
 	go run ./cmd/server/main.go
+
+.PHONY:
+docker-build-server:
+	rm -f ./bin/grpc-server/server
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ./bin/grpc-server/server ./cmd/server/main.go
+	docker image build -t nikasdocker/go-grpc-server .
