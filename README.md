@@ -18,3 +18,27 @@ Also, in this project more advanced topics investigated:
 - gRPC errors and error handling.
 - Deadlines.
 - Reflection.
+
+## Local development
+
+### gRPC Server
+
+- Start Go gRPC server.
+
+```bash
+  make run-server
+```
+
+### gRPC Client
+
+- Start server command mentioned in **gRPC Server** section or run it using docker.
+
+```bash
+  make run-server-docker
+```
+
+- Start Go gRPC client.
+
+```bash
+  make run-client
+```
